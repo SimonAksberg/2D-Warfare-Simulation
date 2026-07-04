@@ -28,6 +28,9 @@ class Simulation():
     def run(self):
         # Simulation loop
         while self.running:
+            # Delta time
+            dt = self.clock.tick(60) / 1000 
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -37,7 +40,7 @@ class Simulation():
             self.screen.fill(constants.BACKGROUND_COLOR)
 
             # This is where the actual simulation should take place
-            self.update()
+            self.update(dt)
 
             self.render()
 
@@ -45,7 +48,6 @@ class Simulation():
             # Updates window based on what has happened in game loop
             pygame.display.flip()
 
-            self.clock.tick(constants.FPS) #Limits simulation a certain fps
 
         pygame.quit()
     
@@ -58,9 +60,9 @@ class Simulation():
             )
         return infantry_unit
     
-    def update(self):
+    def update(self, dt):
         for unit in self.units:
-            unit.update()
+            unit.update(dt)
 
 
     def render(self):
@@ -68,8 +70,8 @@ class Simulation():
             pygame.draw.circle(
                 self.screen, 
                 constants.INFANTRY_COLOR, 
-                (unit.x, unit.y),
-                5 
+                (round(unit.x), round(unit.y)),
+                5
                 )
 
 
