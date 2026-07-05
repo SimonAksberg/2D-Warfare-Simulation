@@ -64,7 +64,10 @@ class Simulation():
         pygame.quit()
     
     def create_unit(self):
-        infantry_unit = Infantry(Vector2(0,random.randint(0,constants.SCREEN_HEIGHT)))
+        infantry_unit = Infantry(
+            Vector2(0, random.randint(0,constants.SCREEN_HEIGHT)),
+            constants.INFANTRY_COLOR
+            )
         return infantry_unit
     
     def create_destination(self):
@@ -76,16 +79,28 @@ class Simulation():
     
     def update(self, dt):
         for unit in self.units:
-            unit.update(dt)
+            unit.update_condition()
+            if unit.condition == "heavily_wounded":
+                unit.color = constants.HEAVILY_WOUNDED_INFANTRY_COLOR
+            elif unit.condition == "wounded":
+                unit.color = constants.WOUNDED_INFANTRY_COLOR
+            else:
+               unit.color = constants.INFANTRY_COLOR
+
+            if unit.health == 0:
+                self.units.remove(unit)
+            else:
+                unit.update(dt)
 
 
     def render(self):
         for unit in self.units:
-            screen_position = self.camera.world_to_screen(unit.position)    
+            unit_screen_position = self.camera.world_to_screen(unit.position) 
+
             pygame.draw.circle(
                 self.screen, 
-                constants.INFANTRY_COLOR, 
-                (round(screen_position.x), round(screen_position.y)),
+                unit.color, 
+                (round(unit_screen_position.x), round(unit_screen_position.y)),
                 5
                 )
 
