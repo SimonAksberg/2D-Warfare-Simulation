@@ -14,7 +14,7 @@ class Vector2:
         return Vector2(self.x - other.x, self.y - other.y)
     
     def normalize(self):
-        length = self.get_length()
+        length = self.length()
 
         if length == 0:
             return Vector2(0,0)
@@ -25,6 +25,6 @@ class Vector2:
     def scalar_multiplication(self, k):
         return Vector2(self.x * k, self.y * k)
 
-    def get_length(self):
+    def length(self):
         return float((math.sqrt(math.pow(self.x,2) + math.pow(self.y,2))))
 
