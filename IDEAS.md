@@ -54,3 +54,74 @@ I also need a conditional to check if the unit is close enough/on the destinatio
 if movement_diff.length  > coordinate_diff.length:
     self.position = self.destination
 
+### Combat System
+The very basics of a combat system would include the following in roughly this order of implementation:
+
+1. Collision detection (since that is what ultimately decides is someone/something is hit or not)
+2. Health mechanic (decides if unit lives or dies)
+3. Projectiles (what the infantry units will shoot)
+4. Target selection (probably just closest enemy unit to start with)
+
+#### Collision detection
+I would likely use something similar to the unit movement coordinate_diff system, except the coordinate_diff is between the two entities such as unit/unit or projectile/unit. Using pseudocode we would get something like:
+
+<pre>
+if entity_in_range:
+    unit.is_hit()
+</pre>
+
+<pre>
+def calculate_collisions(self):
+    for i in range(len(units)):
+        for j in range(len(units)):
+            check(units[i], units[j])
+
+
+coordinate_diff would be the difference between the current unit position and the position of the unit currently being checked against.
+
+This would then update for every entity each tick of the simulation. This implementation, which basically checks EVERY entity against EVERY other entity, feels like it would be a performance nightmare though since there are nested for loops. I could probaly limit the search to only look at enemies inside a certain range of the unit, but don't know how to implement it.
+
+
+**ChatGPT Extra Info** Any ideas? Also, what even is the best way to detect collisions? I'm sure Pygame has some built in function, but ideally I want to be as independant from pygame as possible. How could that work?
+
+#### Unit detection
+I'm thinking something along these lines:
+
+<pre>
+update()
+    if target:
+        unit.shoot(target)
+    else:
+        unit.move_toward_destination()
+</pre>
+
+<pre>
+def enemy_in_range(self):
+    enemy_in_range = False
+
+    for enemy in enemies():
+        difference = enemy.position.subtract(self.position)
+        if difference.length <= self.range:
+            enemy_in_range = True 
+    
+    return enemy_in_range
+</pre>
+
+<pre>
+def shoot(enemy_position):
+    bullet = simulation.create_projectile(unit.position)
+    bullet.move_toward(enemy_position)
+</pre>
+
+<pre>
+def move_toward_destination(self):
+        coordinate_diff = self.destination.subtract(self.position)
+        normalized = coordinate_diff.normalize()
+        unit_velocity = normalized.scalar_multiplication(self.speed)
+        next_movement = unit_velocity.scalar_multiplication(dt)
+
+        if next_movement.length()  > coordinate_diff.length():
+            self.position = self.destination
+        else:
+            self.position = self.position.add(next_movement)
+</pre>
