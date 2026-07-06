@@ -141,6 +141,8 @@ class Simulation():
             for unit in self.units:
                 if unit == projectile.owner:
                     continue
+                if unit in units_to_remove:
+                    continue
 
                 difference = unit.position.subtract(projectile.position)
                 distance = difference.length()
