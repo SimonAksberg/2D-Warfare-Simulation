@@ -5,7 +5,7 @@ class Projectile:
     def __init__(self, position: Vector2, destination: Vector2, owner, color):
         self.position = position
         self.destination = destination
-        self.speed = 100 # m/s
+        self.speed = 300 # m/s
         self.velocity = self.calculate_velocity()
         self.color = color
         self.owner = owner

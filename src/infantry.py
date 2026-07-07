@@ -3,7 +3,7 @@ import random
 
 class Infantry:
 
-    def __init__(self, position: Vector2, color):
+    def __init__(self, position: Vector2, color, faction):
         self.position = position
         self.destination = Vector2(position.x, position.y) 
         self.speed = 20 # speed in m/s
@@ -14,8 +14,9 @@ class Infantry:
         self.color = color
         self.radius = 5
         self.target = None
-        self.range = 100
+        self.range = 200
         self.reload_duration = 0
+        self.faction = faction
 
     # Change name to set_destination when introducing the move_toward function
     def move_to(self, destination: Vector2):
