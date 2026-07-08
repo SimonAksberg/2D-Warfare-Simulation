@@ -22,22 +22,19 @@ class Simulation():
         self.clock = pygame.time.Clock()
 
         self.running = True
-
     
         self.units = []
         self.projectiles = []
         self.destinations =[]
 
-
         self.create_ally_units()
         self.create_enemy_units()
-        
-        for i in range(constants.ALLY_NUMBER_OF_UNITS + constants.ENEMY_NUMBER_OF_UNITS):
-            self.destinations.append(self.create_destination())
+        self.create_unit_destinations()
 
     def run(self):
+        # Positions are currently created once, hence assigned before game loop
         for unit,destination in zip(self.units, self.destinations):
-            unit.move_to(destination)
+            unit.set_destination(destination)
 
         # Simulation loop
         while self.running:
@@ -85,11 +82,15 @@ class Simulation():
             
         infantry_unit = Infantry(
             unit_spawn_point,
-            unit_color,
-            faction
+            faction,
+            unit_color
             )
         return infantry_unit
-    
+
+    def create_unit_destinations(self):
+        for i in range(constants.ALLY_NUMBER_OF_UNITS + constants.ENEMY_NUMBER_OF_UNITS):
+            self.destinations.append(self.create_destination())
+
     def create_destination(self):
         destination = Vector2(
             random.randint(50,constants.SCREEN_WIDTH - 50), 
@@ -97,33 +98,17 @@ class Simulation():
             )
         return destination
     
-    def create_projectile(self, unit_position, target_position, owner):
-        projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)
-        return projectile
-    
     def update(self, dt):
         self.update_target_selection()
-        self.update_units(dt)
+        self.update_unit(dt)
+        self.execute_unit_intent(dt)
         self.update_projectiles(dt)
         self.resolve_projectile_hits()
         self.update_unit_visuals()
-    
-    def update_units(self, dt):
-        for unit in self.units:
-            unit.update_condition()
-            unit.update()
 
-            if unit.intent == "shoot" and unit.target is not None:
-                projectile = self.create_projectile(
-                    unit.position, 
-                    unit.target.position,
-                    unit
-                    )
-                self.projectiles.append(projectile)
-                unit.reload()
-            elif unit.intent == "move":
-                unit.move_towards_destination(dt)
-            
+    def update_target_selection(self):
+        for unit in self.units:
+            unit.target = self.find_target(unit)
 
     def find_target(self,current_unit):
         closest_enemy = None
@@ -141,10 +126,29 @@ class Simulation():
                         closest_distance = distance
 
         return closest_enemy
-
-    def update_target_selection(self):
+    
+    def update_unit(self, dt):
         for unit in self.units:
-            unit.target = self.find_target(unit)
+            unit.update_condition()
+            unit.update_intent()
+
+    def execute_unit_intent(self,dt):
+        for unit in self.units:
+            if unit.intent == "shoot" and unit.target is not None:
+                projectile = self.create_projectile(
+                    unit.position, 
+                    unit.target.position,
+                    unit
+                    )
+                self.projectiles.append(projectile)
+                unit.reload()
+
+            elif unit.intent == "move":
+                unit.move_towards_destination(dt)
+
+    def create_projectile(self, unit_position, target_position, owner):
+        projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)
+        return projectile
         
     def update_projectiles(self,dt):
         for projectile in self.projectiles:

@@ -1,25 +1,26 @@
 from vector2 import Vector2
-import random
+import constants
 
 class Infantry:
 
-    def __init__(self, position: Vector2, color, faction):
+    def __init__(self, position: Vector2, faction, color ):
+        self.health = constants.INFANTRY_MAX_HEALTH
+        self.max_health = constants.INFANTRY_MAX_HEALTH
+        self.speed = constants.INFANTRY_SPEED
+        self.range = constants.INFANTRY_RANGE
+        self.reload_duration = constants.INFANTRY_RELOAD_DURATION
+        self.radius = constants.INFANTRY_RADIUS
         self.position = position
-        self.destination = Vector2(position.x, position.y) 
-        self.speed = 20 # speed in m/s
-        self.health = 10 
-        self.max_health = 10
+        self.destination = position
+        self.remaining_reload_duration = 0
+        self.target = None
         self.condition = "normal"
         self.intent = "move"
-        self.color = color
-        self.radius = 5
-        self.target = None
-        self.range = 200
-        self.reload_duration = 0
         self.faction = faction
+        self.color = color
 
-    # Change name to set_destination when introducing the move_toward function
-    def move_to(self, destination: Vector2):
+
+    def set_destination(self, destination: Vector2):
         self.destination = destination
 
     def take_damage(self, damage):
@@ -35,7 +36,7 @@ class Infantry:
         return self.condition
     
     def reload(self):
-        self.reload_duration = 200
+        self.remaining_reload_duration = self.reload_duration
     
     def move_towards_destination(self,dt):
             coordinate_diff = self.destination.subtract(self.position)
@@ -49,12 +50,12 @@ class Infantry:
                 self.position = self.position.add(next_movement)
             
 
-    def update(self):
-        if self.target and self.reload_duration == 0:
+    def update_intent(self):
+        if self.remaining_reload_duration == 0 and self.target is not None:
             self.intent = "shoot"
         else:
             self.intent = "move"
         
-        if self.reload_duration > 0:
-            self.reload_duration -= 1
+        if self.remaining_reload_duration > 0:
+            self.remaining_reload_duration -= 1
             
