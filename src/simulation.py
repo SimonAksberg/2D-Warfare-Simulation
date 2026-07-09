@@ -29,13 +29,11 @@ class Simulation():
 
         self.create_ally_units()
         self.create_enemy_units()
-        self.create_unit_destinations()
+
+        # Positions are currently created once, hence assigned before game loop
+        self.assign_unit_destinations()
 
     def run(self):
-        # Positions are currently created once, hence assigned before game loop
-        for unit,destination in zip(self.units, self.destinations):
-            unit.set_destination(destination)
-
         # Simulation loop
         while self.running:
             # Delta time
@@ -69,16 +67,10 @@ class Simulation():
     def create_unit(self,faction):
         if faction == "ally":
             unit_color = constants.ALLY_INFANTRY_COLOR
-            unit_spawn_point = Vector2(
-                0,
-                random.randint(0,constants.SCREEN_HEIGHT)
-                )
+            unit_spawn_point = constants.ALLY_SPAWN_POINT
         elif faction == "enemy":
             unit_color = constants.ENEMY_INFANTRY_COLOR
-            unit_spawn_point = Vector2(
-                constants.SCREEN_WIDTH,
-                random.randint(0,constants.SCREEN_HEIGHT)
-                )
+            unit_spawn_point = constants.ENEMY_SPAWN_POINT
             
         infantry_unit = Infantry(
             unit_spawn_point,
@@ -87,25 +79,32 @@ class Simulation():
             )
         return infantry_unit
 
-    def create_unit_destinations(self):
-        for i in range(constants.ALLY_NUMBER_OF_UNITS + constants.ENEMY_NUMBER_OF_UNITS):
-            self.destinations.append(self.create_destination())
+    def assign_unit_destinations(self):
+        for unit in self.units:
+            unit.destination = self.create_destination(unit.faction)
 
-    def create_destination(self):
-        destination = Vector2(
-            random.randint(50,constants.SCREEN_WIDTH - 50), 
-            random.randint(50,constants.SCREEN_HEIGHT - 50)
-            )
-        return destination
+    def create_destination(self,faction):
+        objective_destination = Vector2()
+        destination_offset = self.create_destination_offset()
+        if faction == "ally":
+            objective_destination = constants.ALLY_ADVANCEMENT_POINT
+        elif faction == "enemy":
+            objective_destination = constants.ENEMY_ADVANCEMENT_POINT
+
+        final_destination = objective_destination.add(destination_offset)
+        return final_destination
+    
+    def create_destination_offset(self):
+        return Vector2(random.randint(-100,100),random.randint(-100,100))
     
     def update(self, dt):
-        self.update_target_selection()
-        self.update_unit(dt)
+        self.update_unit_target_selection()
+        self.update_unit_intent()
         self.execute_unit_intent(dt)
         self.update_projectiles(dt)
         self.resolve_projectile_hits()
 
-    def update_target_selection(self):
+    def update_unit_target_selection(self):
         for unit in self.units:
             unit.target = self.find_target(unit)
 
@@ -126,13 +125,28 @@ class Simulation():
 
         return closest_enemy
     
-    def update_unit(self, dt):
+    def update_unit_intent(self):
         for unit in self.units:
-            unit.update_intent()
+            if unit.health <= constants.INFANTRY_HEAVILY_WOUNDED_THRESHOLD:
+                if unit.faction == "ally":
+                    unit.destination = constants.ALLY_RETREAT_POSITION
+                elif unit.faction == "enemy":
+                    unit.destination = constants.ENEMY_RETREAT_POSITION
+
+                unit.intent = "move"
+
+            elif unit.target is not None:
+                if unit.remaining_reload_duration == 0:
+                    unit.intent = "shoot"
+                else:
+                    unit.intent = "hold"
+
+            else:
+                unit.intent = "move"            
 
     def execute_unit_intent(self,dt):
         for unit in self.units:
-            if unit.intent == "shoot" and unit.target is not None:
+            if unit.intent == "shoot":
                 projectile = self.create_projectile(
                     unit.position, 
                     unit.target.position,
@@ -143,6 +157,12 @@ class Simulation():
 
             elif unit.intent == "move":
                 unit.move_towards_destination(dt)
+            elif unit.intent == "hold":
+                pass
+
+            if unit.remaining_reload_duration > 0:
+                unit.reduce_reload_duration()
+
 
     def create_projectile(self, unit_position, target_position, owner):
         projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)

@@ -15,6 +15,7 @@ class Infantry:
         self.remaining_reload_duration = 0
         self.target = None
         self.wounded_status = "normal"
+        self.state = "ADVANCE"
         self.intent = "move"
         self.faction = faction
         self.color = color
@@ -28,10 +29,10 @@ class Infantry:
         self.update_wounded_status()
 
     def update_wounded_status(self):
-        if self.health <= constants.INFANTRY_HEAVILY_WOUNDED_THRESHOLD * self.max_health:
+        if self.health <= constants.INFANTRY_HEAVILY_WOUNDED_THRESHOLD:
             self.wounded_status = "heavily_wounded"
 
-        elif self.health <= constants.INFANTRY_WOUNDED_THRESHOLD * self.max_health:
+        elif self.health <= constants.INFANTRY_WOUNDED_THRESHOLD:
             self.wounded_status = "wounded"
 
         else:
@@ -69,14 +70,6 @@ class Infantry:
                 self.position = self.destination
             else:
                 self.position = self.position.add(next_movement)
-            
-
-    def update_intent(self):
-        if self.remaining_reload_duration == 0 and self.target is not None:
-            self.intent = "shoot"
-        else:
-            self.intent = "move"
-        
-        if self.remaining_reload_duration > 0:
-            self.remaining_reload_duration -= 1
-            
+    
+    def reduce_reload_duration(self):
+        self.remaining_reload_duration -= 1

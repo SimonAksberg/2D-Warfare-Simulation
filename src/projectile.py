@@ -1,16 +1,17 @@
 from vector2 import Vector2
+import constants
 
 class Projectile:
 
     def __init__(self, position: Vector2, destination: Vector2, owner, color):
         self.position = position
         self.destination = destination
-        self.speed = 300 # m/s
+        self.speed = constants.PROJECTILE_SPEED
         self.velocity = self.calculate_velocity()
         self.color = color
         self.owner = owner
-        self.damage = 4
-        self.radius = 1
+        self.damage = constants.PROJECTILE_DAMAGE
+        self.radius = constants.PROJECTILE_RADIUS
 
     def move_to(self,destination):
         self.destination = destination
