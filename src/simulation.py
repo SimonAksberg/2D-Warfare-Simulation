@@ -22,6 +22,7 @@ class Simulation():
         self.clock = pygame.time.Clock()
 
         self.running = True
+        self.paused = False
     
         self.units = []
         self.projectiles = []
@@ -42,12 +43,17 @@ class Simulation():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.paused = not self.paused
 
             # Fill screen with background color to wipe away anything from previous frame
             self.screen.fill(constants.BACKGROUND_COLOR)
 
             # This is where the actual simulation should take place
-            self.update(dt)
+            if not self.paused:
+                self.update(dt)
+
             self.render()
 
             # Updates window based on what has happened in game loop
