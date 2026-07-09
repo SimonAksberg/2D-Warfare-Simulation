@@ -104,7 +104,6 @@ class Simulation():
         self.execute_unit_intent(dt)
         self.update_projectiles(dt)
         self.resolve_projectile_hits()
-        self.update_unit_visuals()
 
     def update_target_selection(self):
         for unit in self.units:
@@ -129,7 +128,6 @@ class Simulation():
     
     def update_unit(self, dt):
         for unit in self.units:
-            unit.update_condition()
             unit.update_intent()
 
     def execute_unit_intent(self,dt):
@@ -181,22 +179,6 @@ class Simulation():
 
         for unit in units_to_remove:
             self.units.remove(unit)
-
-    def update_unit_visuals(self):
-        for unit in self.units:
-            if unit.faction == "ally":
-                if unit.condition == "wounded":
-                    unit.color = constants.ALLY_WOUNDED_INFANTRY_COLOR
-
-                if unit.condition == "heavily_wounded":
-                    unit.color = constants.ALLY_HEAVILY_WOUNDED_INFANTRY_COLOR
-
-            elif unit.faction == "enemy":
-                if unit.condition == "wounded":
-                    unit.color = constants.ENEMY_WOUNDED_INFANTRY_COLOR
-
-                if unit.condition == "heavily_wounded":
-                    unit.color = constants.ENEMY_HEAVILY_WOUNDED_INFANTRY_COLOR
 
     def render(self):
         for unit in self.units:
