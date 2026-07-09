@@ -22,23 +22,18 @@ class Simulation():
         self.clock = pygame.time.Clock()
 
         self.running = True
-
     
         self.units = []
         self.projectiles = []
         self.destinations =[]
 
-
         self.create_ally_units()
         self.create_enemy_units()
-        
-        for i in range(constants.ALLY_NUMBER_OF_UNITS + constants.ENEMY_NUMBER_OF_UNITS):
-            self.destinations.append(self.create_destination())
+
+        # Positions are currently created once, hence assigned before game loop
+        self.assign_unit_destinations()
 
     def run(self):
-        for unit,destination in zip(self.units, self.destinations):
-            unit.move_to(destination)
-
         # Simulation loop
         while self.running:
             # Delta time
@@ -72,58 +67,46 @@ class Simulation():
     def create_unit(self,faction):
         if faction == "ally":
             unit_color = constants.ALLY_INFANTRY_COLOR
-            unit_spawn_point = Vector2(
-                0,
-                random.randint(0,constants.SCREEN_HEIGHT)
-                )
+            unit_spawn_point = constants.ALLY_SPAWN_POINT
         elif faction == "enemy":
             unit_color = constants.ENEMY_INFANTRY_COLOR
-            unit_spawn_point = Vector2(
-                constants.SCREEN_WIDTH,
-                random.randint(0,constants.SCREEN_HEIGHT)
-                )
+            unit_spawn_point = constants.ENEMY_SPAWN_POINT
             
         infantry_unit = Infantry(
             unit_spawn_point,
-            unit_color,
-            faction
+            faction,
+            unit_color
             )
         return infantry_unit
+
+    def assign_unit_destinations(self):
+        for unit in self.units:
+            unit.destination = self.create_destination(unit.faction)
+
+    def create_destination(self,faction):
+        objective_destination = Vector2()
+        destination_offset = self.create_destination_offset()
+        if faction == "ally":
+            objective_destination = constants.ALLY_ADVANCEMENT_POINT
+        elif faction == "enemy":
+            objective_destination = constants.ENEMY_ADVANCEMENT_POINT
+
+        final_destination = objective_destination.add(destination_offset)
+        return final_destination
     
-    def create_destination(self):
-        destination = Vector2(
-            random.randint(50,constants.SCREEN_WIDTH - 50), 
-            random.randint(50,constants.SCREEN_HEIGHT - 50)
-            )
-        return destination
-    
-    def create_projectile(self, unit_position, target_position, owner):
-        projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)
-        return projectile
+    def create_destination_offset(self):
+        return Vector2(random.randint(-100,100),random.randint(-100,100))
     
     def update(self, dt):
-        self.update_target_selection()
-        self.update_units(dt)
+        self.update_unit_target_selection()
+        self.update_unit_intent()
+        self.execute_unit_intent(dt)
         self.update_projectiles(dt)
         self.resolve_projectile_hits()
-        self.update_unit_visuals()
-    
-    def update_units(self, dt):
-        for unit in self.units:
-            unit.update_condition()
-            unit.update()
 
-            if unit.intent == "shoot" and unit.target is not None:
-                projectile = self.create_projectile(
-                    unit.position, 
-                    unit.target.position,
-                    unit
-                    )
-                self.projectiles.append(projectile)
-                unit.reload()
-            elif unit.intent == "move":
-                unit.move_towards_destination(dt)
-            
+    def update_unit_target_selection(self):
+        for unit in self.units:
+            unit.target = self.find_target(unit)
 
     def find_target(self,current_unit):
         closest_enemy = None
@@ -141,10 +124,49 @@ class Simulation():
                         closest_distance = distance
 
         return closest_enemy
-
-    def update_target_selection(self):
+    
+    def update_unit_intent(self):
         for unit in self.units:
-            unit.target = self.find_target(unit)
+            if unit.health <= constants.INFANTRY_HEAVILY_WOUNDED_THRESHOLD:
+                if unit.faction == "ally":
+                    unit.destination = constants.ALLY_RETREAT_POSITION
+                elif unit.faction == "enemy":
+                    unit.destination = constants.ENEMY_RETREAT_POSITION
+
+                unit.intent = "move"
+
+            elif unit.target is not None:
+                if unit.remaining_reload_duration == 0:
+                    unit.intent = "shoot"
+                else:
+                    unit.intent = "hold"
+
+            else:
+                unit.intent = "move"            
+
+    def execute_unit_intent(self,dt):
+        for unit in self.units:
+            if unit.intent == "shoot":
+                projectile = self.create_projectile(
+                    unit.position, 
+                    unit.target.position,
+                    unit
+                    )
+                self.projectiles.append(projectile)
+                unit.reload()
+
+            elif unit.intent == "move":
+                unit.move_towards_destination(dt)
+            elif unit.intent == "hold":
+                pass
+
+            if unit.remaining_reload_duration > 0:
+                unit.reduce_reload_duration()
+
+
+    def create_projectile(self, unit_position, target_position, owner):
+        projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)
+        return projectile
         
     def update_projectiles(self,dt):
         for projectile in self.projectiles:
@@ -177,22 +199,6 @@ class Simulation():
 
         for unit in units_to_remove:
             self.units.remove(unit)
-
-    def update_unit_visuals(self):
-        for unit in self.units:
-            if unit.faction == "ally":
-                if unit.condition == "wounded":
-                    unit.color = constants.ALLY_WOUNDED_INFANTRY_COLOR
-
-                if unit.condition == "heavily_wounded":
-                    unit.color = constants.ALLY_HEAVILY_WOUNDED_INFANTRY_COLOR
-
-            elif unit.faction == "enemy":
-                if unit.condition == "wounded":
-                    unit.color = constants.ENEMY_WOUNDED_INFANTRY_COLOR
-
-                if unit.condition == "heavily_wounded":
-                    unit.color = constants.ENEMY_HEAVILY_WOUNDED_INFANTRY_COLOR
 
     def render(self):
         for unit in self.units:

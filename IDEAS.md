@@ -13,8 +13,18 @@
 - Suppression
 - (Flanking)
 
+## Optimizations
+- Implement hidden grid system so projectiles can check all units in close proximity rather than every unit on the map.
+
+## Random
+
+
 
 ## Workspace (thinking about ideas)
+
+### Current structure
+<img src="Rough_Structure_Sketch.png" width="720" height="405"/>
+
 ### Camera/scale
 Ideally I want a simulation where you can zoom the camera, which means the scale has to be dependant of the camera zoom. If I have a constant such as `PIXELS_PER_METER`, I can use that to keep movement constant even though I might be zoomed in or out. How would this work:
 
@@ -62,7 +72,7 @@ The very basics of a combat system would include the following in roughly this o
 3. Projectiles (what the infantry units will shoot)
 4. Target selection (probably just closest enemy unit to start with)
 
-#### Collision detection
+### Collision detection
 I would likely use something similar to the unit movement coordinate_diff system, except the coordinate_diff is between the two entities such as unit/unit or projectile/unit. Using pseudocode we would get something like:
 
 <pre>
@@ -125,3 +135,40 @@ def move_toward_destination(self):
         else:
             self.position = self.position.add(next_movement)
 </pre>
+
+
+### Basic unit AI
+I will need some type of state field for each unit, where the basic version would be similar to my current intent solution whereby each update units decide if they should walk or shoot. I would also benefit from implementing memory so units don't have to update movement every single frame.
+
+
+simulation.update():
+
+    simulation.observe() -->
+    --> for each unit in units: 
+            unit.state = "something" (depending on conditionals)
+
+    switch (state):
+        ADVANCE
+            unit.intent = "move"
+            unit.destination = some_predefined_advancement_destination
+        HOLD
+            unit.destination = unit.position
+            if enemy in range and remaining_reload_duration == 0:
+                unit.intent = "shoot"
+            else:
+                unit.intent = "move"
+                unit.destination = some_predefined_advancement_destination
+        RETREAT
+            unit.intent = "move"
+            unit.destnation = some_predefined_retreat_position
+
+    simulation.execute_unit_intent()
+    --> for each unit in units:
+        switch(intent)
+            move
+                unit.move_toward_destination()
+            shoot
+                create_new_projectile()
+            normal
+                pass
+        
