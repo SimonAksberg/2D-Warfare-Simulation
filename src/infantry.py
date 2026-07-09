@@ -41,20 +41,12 @@ class Infantry:
         self.update_appearance()
 
     def update_appearance(self):
-            if self.faction == "ally":
-                if self.wounded_status == "heavily_wounded":
-                    self.color = constants.ALLY_HEAVILY_WOUNDED_INFANTRY_COLOR
-                elif self.wounded_status == "wounded":
-                    self.color = constants.ALLY_WOUNDED_INFANTRY_COLOR
-                else:
-                    self.color = constants.ALLY_INFANTRY_COLOR
-            elif self.faction == "enemy":
-                if self.wounded_status == "heavily_wounded":
-                    self.color = constants.ENEMY_HEAVILY_WOUNDED_INFANTRY_COLOR
-                elif self.wounded_status == "wounded":
-                    self.color = constants.ENEMY_WOUNDED_INFANTRY_COLOR
-                else:
-                    self.color = constants.ENEMY_INFANTRY_COLOR
+        if self.wounded_status == "heavily_wounded":
+            self.color = self.faction.heavily_wounded_color
+        elif self.wounded_status == "wounded":
+            self.color = self.faction.wounded_color
+        else:
+            self.color = self.faction.color
         
     
     def reload(self):

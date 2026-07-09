@@ -22,6 +22,7 @@ class Simulation():
         self.clock = pygame.time.Clock()
 
         self.running = True
+        self.paused = False
     
         self.units = []
         self.projectiles = []
@@ -42,12 +43,17 @@ class Simulation():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.paused = not self.paused
 
             # Fill screen with background color to wipe away anything from previous frame
             self.screen.fill(constants.BACKGROUND_COLOR)
 
             # This is where the actual simulation should take place
-            self.update(dt)
+            if not self.paused:
+                self.update(dt)
+
             self.render()
 
             # Updates window based on what has happened in game loop
@@ -58,19 +64,15 @@ class Simulation():
 
     def create_ally_units(self):
         for _ in range(constants.ALLY_NUMBER_OF_UNITS):
-            self.units.append(self.create_unit("ally"))
+            self.units.append(self.create_unit(constants.ALLY))
     
     def create_enemy_units(self):
         for _ in range(constants.ENEMY_NUMBER_OF_UNITS):
-             self.units.append(self.create_unit("enemy"))          
+             self.units.append(self.create_unit(constants.ENEMY))          
     
     def create_unit(self,faction):
-        if faction == "ally":
-            unit_color = constants.ALLY_INFANTRY_COLOR
-            unit_spawn_point = constants.ALLY_SPAWN_POINT
-        elif faction == "enemy":
-            unit_color = constants.ENEMY_INFANTRY_COLOR
-            unit_spawn_point = constants.ENEMY_SPAWN_POINT
+        unit_color = faction.color
+        unit_spawn_point = faction.spawn_point
             
         infantry_unit = Infantry(
             unit_spawn_point,
@@ -84,13 +86,8 @@ class Simulation():
             unit.destination = self.create_destination(unit.faction)
 
     def create_destination(self,faction):
-        objective_destination = Vector2()
+        objective_destination = faction.objective
         destination_offset = self.create_destination_offset()
-        if faction == "ally":
-            objective_destination = constants.ALLY_ADVANCEMENT_POINT
-        elif faction == "enemy":
-            objective_destination = constants.ENEMY_ADVANCEMENT_POINT
-
         final_destination = objective_destination.add(destination_offset)
         return final_destination
     
@@ -127,12 +124,8 @@ class Simulation():
     
     def update_unit_intent(self):
         for unit in self.units:
-            if unit.health <= constants.INFANTRY_HEAVILY_WOUNDED_THRESHOLD:
-                if unit.faction == "ally":
-                    unit.destination = constants.ALLY_RETREAT_POSITION
-                elif unit.faction == "enemy":
-                    unit.destination = constants.ENEMY_RETREAT_POSITION
-
+            if unit.wounded_status == "heavily_wounded":
+                unit.destination = unit.faction.retreat_point
                 unit.intent = "move"
 
             elif unit.target is not None:

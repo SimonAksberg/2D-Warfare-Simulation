@@ -1,4 +1,5 @@
 from vector2 import Vector2
+from faction import Faction
 
 # General settings
 SCREEN_WIDTH = 512 * 2
@@ -6,23 +7,41 @@ SCREEN_HEIGHT = 320 * 2
 BACKGROUND_COLOR = (161, 161, 161)
 
 # Ally faction
-ALLY_INFANTRY_COLOR = (47, 140, 255) # 7 < unit.health <= 10
-ALLY_WOUNDED_INFANTRY_COLOR = (110, 175, 255) # 3 < health <= 7
-ALLY_HEAVILY_WOUNDED_INFANTRY_COLOR = (154, 200, 255) # 0 < health <= 3
+ALLY_NAME = "ally"
+ALLY_COLOR = (47, 140, 255) # 7 < unit.health <= 10
+ALLY_WOUNDED_COLOR = (110, 175, 255) # 3 < health <= 7
+ALLY_HEAVILY_WOUNDED_COLOR = (154, 200, 255) # 0 < health <= 3
 ALLY_SPAWN_POINT = Vector2(0,0) # Top left corner of screen
-ALLY_RETREAT_POSITION = ALLY_SPAWN_POINT
+ALLY_RETREAT_POINT = ALLY_SPAWN_POINT
 ALLY_ADVANCEMENT_POINT = Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 ALLY_NUMBER_OF_UNITS = 20
 
+ALLY = Faction(ALLY_NAME,
+               ALLY_COLOR,
+               ALLY_WOUNDED_COLOR,
+               ALLY_HEAVILY_WOUNDED_COLOR,
+               ALLY_SPAWN_POINT,
+               ALLY_RETREAT_POINT,
+               ALLY_ADVANCEMENT_POINT)
+
 
 # Enemy faction
-ENEMY_INFANTRY_COLOR = (255, 125, 19) # 7 < unit.health <= 10
-ENEMY_WOUNDED_INFANTRY_COLOR = (255, 157, 77) # 3 < health <= 7
-ENEMY_HEAVILY_WOUNDED_INFANTRY_COLOR = (255, 200, 154) # 0 < health <= 3
+ENEMY_NAME = "enemy"
+ENEMY_COLOR = (255, 125, 19) # 7 < unit.health <= 10
+ENEMY_WOUNDED_COLOR = (255, 157, 77) # 3 < health <= 7
+ENEMY_HEAVILY_WOUNDED_COLOR = (255, 200, 154) # 0 < health <= 3
 ENEMY_SPAWN_POINT = Vector2(SCREEN_WIDTH,SCREEN_HEIGHT) # Bottom right corner of screen
-ENEMY_RETREAT_POSITION = ENEMY_SPAWN_POINT
+ENEMY_RETREAT_POINT = ENEMY_SPAWN_POINT
 ENEMY_ADVANCEMENT_POINT = Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 ENEMY_NUMBER_OF_UNITS = 20
+
+ENEMY = Faction(ENEMY_NAME,
+                ENEMY_COLOR,
+                ENEMY_WOUNDED_COLOR,
+                ENEMY_HEAVILY_WOUNDED_COLOR,
+                ENEMY_SPAWN_POINT,
+                ENEMY_RETREAT_POINT,
+                ENEMY_ADVANCEMENT_POINT)
 
 
 # Infantry unit stats
