@@ -2,9 +2,10 @@ from vector2 import Vector2
 from faction import Faction
 
 # General settings
-SCREEN_WIDTH = 512 * 2
-SCREEN_HEIGHT = 320 * 2
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 BACKGROUND_COLOR = (161, 161, 161)
+CELL_SIZE = 100
 
 # Ally faction
 ALLY_NAME = "ally"

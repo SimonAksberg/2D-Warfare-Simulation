@@ -5,6 +5,7 @@ from infantry import Infantry
 from projectile import Projectile
 import random
 from vector2 import Vector2
+from spatialgrid import SpatialGrid
 
 class Simulation():
     def __init__(self):
@@ -23,10 +24,11 @@ class Simulation():
 
         self.running = True
         self.paused = False
-    
+        
         self.units = []
         self.projectiles = []
         self.destinations =[]
+        self.grid = SpatialGrid()
 
         self.create_ally_units()
         self.create_enemy_units()
@@ -59,6 +61,7 @@ class Simulation():
             # Updates window based on what has happened in game loop
             pygame.display.flip()
 
+        print(self.grid.cells)
 
         pygame.quit()
 
@@ -95,11 +98,18 @@ class Simulation():
         return Vector2(random.randint(-100,100),random.randint(-100,100))
     
     def update(self, dt):
+        self.update_spatial_grid()
         self.update_unit_target_selection()
         self.update_unit_intent()
         self.execute_unit_intent(dt)
         self.update_projectiles(dt)
         self.resolve_projectile_hits()
+    
+    def update_spatial_grid(self):
+        self.grid.clear()
+
+        for unit in self.units:
+            self.grid.insert(unit)
 
     def update_unit_target_selection(self):
         for unit in self.units:
