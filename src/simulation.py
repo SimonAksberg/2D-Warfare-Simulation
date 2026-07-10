@@ -11,6 +11,9 @@ class Simulation():
     def __init__(self):
         # Setup
         pygame.init()
+        pygame.font.init()
+
+        self.my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
         self.camera = Camera()
 
@@ -249,8 +252,6 @@ class Simulation():
                 )
             
     def draw_grid(self):
-
-
         # Draw horizontal lines
         for x in range(0, constants.SCREEN_WIDTH + 1, constants.CELL_SIZE):
             screen_x = x - self.camera.position.x
@@ -271,4 +272,16 @@ class Simulation():
                 constants.GRID_COLOR,
                 (0, screen_y),
                 (constants.SCREEN_WIDTH, screen_y)
+            )
+
+        for cell, units in self.grid.cells.items():
+            # Calculate world coordinates from cell coordinates
+            screen_x = cell[0] * self.grid.cell_size
+            screen_y = cell[1] * self.grid.cell_size
+
+            text = self.my_font.render(str(len(units)), True, (255, 255, 255) )
+
+            self.screen.blit(
+                text,
+                (screen_x, screen_y)
             )
