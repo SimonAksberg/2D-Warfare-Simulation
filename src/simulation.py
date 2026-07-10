@@ -119,19 +119,19 @@ class Simulation():
         for unit in self.units:
             unit.target = self.find_target(unit)
 
-    def find_target(self,current_unit):
+    def find_target(self,unit):
         closest_enemy = None
         closest_distance = float("inf")
 
-        for other_unit in self.units:
-            if other_unit.faction == current_unit.faction:
+        for candidate in self.grid.query_radius(unit.position, unit.range):
+            if candidate.faction == unit.faction:
                 continue
             else:
-                distance = other_unit.position.subtract(current_unit.position).length()
-                if distance < current_unit.range:
+                distance = candidate.position.subtract(unit.position).length()
+                if distance < unit.range:
 
                     if distance < closest_distance:
-                        closest_enemy = other_unit
+                        closest_enemy = candidate
                         closest_distance = distance
 
         return closest_enemy
@@ -187,9 +187,8 @@ class Simulation():
         units_to_remove = []
 
         for projectile in self.projectiles:
-            for unit in self.units:
-                # second condition decides if friendly fire is on or not
-                if unit == projectile.owner or unit.faction == projectile.owner.faction:
+            for unit in self.grid.query_radius(projectile.position, projectile.radius):
+                if unit.faction == projectile.owner.faction:
                     continue
                 if unit in units_to_remove:
                     continue
