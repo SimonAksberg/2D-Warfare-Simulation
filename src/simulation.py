@@ -26,6 +26,8 @@ class Simulation():
         self.paused = False
         
         self.units = []
+        self.allies = []
+        self.enemies = []
         self.projectiles = []
         self.destinations =[]
         self.grid = SpatialGrid()
@@ -61,17 +63,19 @@ class Simulation():
             # Updates window based on what has happened in game loop
             pygame.display.flip()
 
-        print(self.grid.cells)
-
         pygame.quit()
 
     def create_ally_units(self):
         for _ in range(constants.ALLY_NUMBER_OF_UNITS):
-            self.units.append(self.create_unit(constants.ALLY))
+            ally_unit = self.create_unit(constants.ALLY)
+            self.units.append(ally_unit)
+            self.allies.append(ally_unit)
     
     def create_enemy_units(self):
         for _ in range(constants.ENEMY_NUMBER_OF_UNITS):
-             self.units.append(self.create_unit(constants.ENEMY))          
+            enemy_unit = self.create_unit(constants.ENEMY)
+            self.units.append(enemy_unit)
+            self.enemies.append(enemy_unit)        
     
     def create_unit(self,faction):
         unit_color = faction.color
@@ -168,7 +172,10 @@ class Simulation():
 
 
     def create_projectile(self, unit_position, target_position, owner):
-        projectile = Projectile(unit_position, target_position, owner, constants.PROJECTILE_COLOR)
+        projectile = Projectile(unit_position,
+                                target_position,
+                                owner,
+                                constants.PROJECTILE_COLOR)
         return projectile
         
     def update_projectiles(self,dt):
@@ -202,6 +209,11 @@ class Simulation():
 
         for unit in units_to_remove:
             self.units.remove(unit)
+
+            if unit.faction is constants.ALLY:
+                self.allies.remove(unit)
+            else:
+                self.enemies.remove(unit)
 
     def render(self):
         for unit in self.units:
