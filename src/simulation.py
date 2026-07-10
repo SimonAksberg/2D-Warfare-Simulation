@@ -24,6 +24,7 @@ class Simulation():
 
         self.running = True
         self.paused = False
+        self.show_grid = False
         
         self.units = []
         self.allies = []
@@ -51,6 +52,9 @@ class Simulation():
                     if event.key == pygame.K_SPACE:
                         self.paused = not self.paused
 
+                    if event.key == pygame.K_g:
+                        self.show_grid = not self.show_grid
+        
             # Fill screen with background color to wipe away anything from previous frame
             self.screen.fill(constants.BACKGROUND_COLOR)
 
@@ -215,6 +219,14 @@ class Simulation():
                 self.enemies.remove(unit)
 
     def render(self):
+        self.draw_units()
+        self.draw_projectiles()
+
+        if self.show_grid:
+            self.draw_grid()
+
+        
+    def draw_units(self):
         for unit in self.units:
             unit_screen_position = self.camera.world_to_screen(unit.position) 
 
@@ -225,6 +237,7 @@ class Simulation():
                 unit.radius
                 )
             
+    def draw_projectiles(self):
         for projectile in self.projectiles:
             projectile_screen_position = self.camera.world_to_screen(projectile.position)
 
@@ -234,3 +247,28 @@ class Simulation():
                 (round(projectile_screen_position.x), round(projectile_screen_position.y)),
                 projectile.radius
                 )
+            
+    def draw_grid(self):
+
+
+        # Draw horizontal lines
+        for x in range(0, constants.SCREEN_WIDTH + 1, constants.CELL_SIZE):
+            screen_x = x - self.camera.position.x
+
+            pygame.draw.line(
+                self.screen,
+                constants.GRID_COLOR,
+                (screen_x, 0),
+                (screen_x, constants.SCREEN_HEIGHT)
+            )
+        
+        # Draw vertical lines
+        for y in range(0, constants.SCREEN_HEIGHT + 1, constants.CELL_SIZE):
+            screen_y = y - self.camera.position.y
+
+            pygame.draw.line(
+                self.screen,
+                constants.GRID_COLOR,
+                (0, screen_y),
+                (constants.SCREEN_WIDTH, screen_y)
+            )
