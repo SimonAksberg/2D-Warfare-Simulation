@@ -85,6 +85,7 @@ def calculate_collisions(self):
     for i in range(len(units)):
         for j in range(len(units)):
             check(units[i], units[j])
+</pre>
 
 
 coordinate_diff would be the difference between the current unit position and the position of the unit currently being checked against.
@@ -171,4 +172,44 @@ simulation.update():
                 create_new_projectile()
             normal
                 pass
-        
+
+
+### Spatial Grid for optimization and later functionality
+I'll introduce a spatial grid, where the cell width and height are stored as variables. Then, whenever I need to calculate collisions, I can transform the unit/projectile coordinates into a cell in the grid and only calculate collision for that projectile against the units in that cell. However, I'll need to check the neighbouring cells as well. This gives me something like:
+
+<img src="Spatial_Grid_Sketch.png" width="400" height="400"/>
+
+Where A,B,C,D,E are units and P is the projectile
+
+
+Pseudocode:
+
+SpatialGrid:
+
+    fields:
+        # dictionary where key is cell coordinates and value is list of units in that cell
+        cells = {(cell coordinates), units in that cell}
+        cell width = constants.CELL_WIDTH
+        cell height = constants.CELL_HEIGHT
+
+
+    def calculate_coordinate_to_cell(entity):
+        cell.x = entity.position.x // cell width
+        cell.y = entity.position.y // cell height
+
+        cell = Vector2(cell.x, cell.y) # Maybe use vector class?
+
+        return cell
+
+Simulation:
+
+Projectiles will also have a cell which we will check against, meaning:
+
+for each projectile:
+    for each unit in adjacent_cells:
+        calculate collision with units
+
+
+
+## Notes
+- Keys in python dictionaries have to an immutable object, i.e. strings and numbers are always fine. Tuples are also fine if they contain strings, numbers or tuples.
