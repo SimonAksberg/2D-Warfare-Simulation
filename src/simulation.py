@@ -1,40 +1,28 @@
 import pygame
+import random
 import constants
-from camera import Camera
 from infantry import Infantry
 from projectile import Projectile
-import random
 from vector2 import Vector2
-from spatialgrid import SpatialGrid
+from renderer import Renderer
+from world import World
 
 class Simulation():
     def __init__(self):
         # Setup
-        pygame.init()
-        pygame.font.init()
-
-        self.my_font = pygame.font.SysFont('Comic Sans MS', 30)
-
-        self.camera = Camera()
-
-        self.screen = pygame.display.set_mode(
-            (constants.SCREEN_WIDTH,constants.SCREEN_HEIGHT)
-        )
-
-        pygame.display.set_caption("Warfare Simulation")
-
         self.clock = pygame.time.Clock()
 
         self.running = True
         self.paused = False
-        self.show_grid = False
+        self.world = World()
+        self.renderer = Renderer()
         
-        self.units = []
-        self.allies = []
-        self.enemies = []
-        self.projectiles = []
-        self.destinations =[]
-        self.grid = SpatialGrid()
+        # self.units = []
+        # self.allies = []
+        # self.enemies = []
+        # self.projectiles = []
+        # self.destinations =[]
+        # self.grid = SpatialGrid()
 
         self.create_ally_units()
         self.create_enemy_units()
@@ -56,16 +44,15 @@ class Simulation():
                         self.paused = not self.paused
 
                     if event.key == pygame.K_g:
-                        self.show_grid = not self.show_grid
+                        self.renderer.show_grid = not self.renderer.show_grid
         
             # Fill screen with background color to wipe away anything from previous frame
-            self.screen.fill(constants.BACKGROUND_COLOR)
 
             # This is where the actual simulation should take place
             if not self.paused:
                 self.update(dt)
 
-            self.render()
+            self.renderer.draw(self.world)
 
             # Updates window based on what has happened in game loop
             pygame.display.flip()
@@ -75,14 +62,14 @@ class Simulation():
     def create_ally_units(self):
         for _ in range(constants.ALLY_NUMBER_OF_UNITS):
             ally_unit = self.create_unit(constants.ALLY)
-            self.units.append(ally_unit)
-            self.allies.append(ally_unit)
+            self.world.units.append(ally_unit)
+            self.world.allies.append(ally_unit)
     
     def create_enemy_units(self):
         for _ in range(constants.ENEMY_NUMBER_OF_UNITS):
             enemy_unit = self.create_unit(constants.ENEMY)
-            self.units.append(enemy_unit)
-            self.enemies.append(enemy_unit)        
+            self.world.units.append(enemy_unit)
+            self.world.enemies.append(enemy_unit)        
     
     def create_unit(self,faction):
         unit_color = faction.color
@@ -96,7 +83,7 @@ class Simulation():
         return infantry_unit
 
     def assign_unit_destinations(self):
-        for unit in self.units:
+        for unit in self.world.units:
             unit.destination = self.create_destination(unit.faction)
 
     def create_destination(self,faction):
@@ -117,20 +104,20 @@ class Simulation():
         self.resolve_projectile_hits()
     
     def update_spatial_grid(self):
-        self.grid.clear()
+        self.world.grid.clear()
 
-        for unit in self.units:
-            self.grid.insert(unit)
+        for unit in self.world.units:
+            self.world.grid.insert(unit)
 
     def update_unit_target_selection(self):
-        for unit in self.units:
+        for unit in self.world.units:
             unit.target = self.find_target(unit)
 
     def find_target(self,unit):
         closest_enemy = None
         closest_distance = float("inf")
 
-        for candidate in self.grid.query_radius(unit.position, unit.range):
+        for candidate in self.world.grid.query_radius(unit.position, unit.range):
             if candidate.faction == unit.faction:
                 continue
             else:
@@ -144,7 +131,7 @@ class Simulation():
         return closest_enemy
     
     def update_unit_intent(self):
-        for unit in self.units:
+        for unit in self.world.units:
             if unit.wounded_status == "heavily_wounded":
                 unit.destination = unit.faction.retreat_point
                 unit.intent = "move"
@@ -159,14 +146,14 @@ class Simulation():
                 unit.intent = "move"            
 
     def execute_unit_intent(self,dt):
-        for unit in self.units:
+        for unit in self.world.units:
             if unit.intent == "shoot":
                 projectile = self.create_projectile(
                     unit.position, 
                     unit.target.position,
                     unit
                     )
-                self.projectiles.append(projectile)
+                self.world.projectiles.append(projectile)
                 unit.reload()
 
             elif unit.intent == "move":
@@ -186,15 +173,15 @@ class Simulation():
         return projectile
         
     def update_projectiles(self,dt):
-        for projectile in self.projectiles:
+        for projectile in self.world.projectiles:
             projectile.update(dt)
 
     def resolve_projectile_hits(self):
         projectiles_to_remove = []
         units_to_remove = []
 
-        for projectile in self.projectiles:
-            for unit in self.grid.query_radius(projectile.position, projectile.radius):
+        for projectile in self.world.projectiles:
+            for unit in self.world.grid.query_radius(projectile.position, projectile.radius):
                 if unit.faction == projectile.owner.faction:
                     continue
                 if unit in units_to_remove:
@@ -211,77 +198,12 @@ class Simulation():
                     break
 
         for projectile in projectiles_to_remove:
-            self.projectiles.remove(projectile) 
+            self.world.projectiles.remove(projectile) 
 
         for unit in units_to_remove:
-            self.units.remove(unit)
+            self.world.units.remove(unit)
 
             if unit.faction is constants.ALLY:
-                self.allies.remove(unit)
+                self.world.allies.remove(unit)
             else:
-                self.enemies.remove(unit)
-
-    def render(self):
-        self.draw_units()
-        self.draw_projectiles()
-
-        if self.show_grid:
-            self.draw_grid()
-
-        
-    def draw_units(self):
-        for unit in self.units:
-            unit_screen_position = self.camera.world_to_screen(unit.position) 
-
-            pygame.draw.circle(
-                self.screen, 
-                unit.color, 
-                (round(unit_screen_position.x), round(unit_screen_position.y)),
-                unit.radius
-                )
-            
-    def draw_projectiles(self):
-        for projectile in self.projectiles:
-            projectile_screen_position = self.camera.world_to_screen(projectile.position)
-
-            pygame.draw.circle(
-                self.screen,
-                projectile.color,
-                (round(projectile_screen_position.x), round(projectile_screen_position.y)),
-                projectile.radius
-                )
-            
-    def draw_grid(self):
-        # Draw horizontal lines
-        for x in range(0, constants.SCREEN_WIDTH + 1, constants.CELL_SIZE):
-            screen_x = x - self.camera.position.x
-
-            pygame.draw.line(
-                self.screen,
-                constants.GRID_COLOR,
-                (screen_x, 0),
-                (screen_x, constants.SCREEN_HEIGHT)
-            )
-        
-        # Draw vertical lines
-        for y in range(0, constants.SCREEN_HEIGHT + 1, constants.CELL_SIZE):
-            screen_y = y - self.camera.position.y
-
-            pygame.draw.line(
-                self.screen,
-                constants.GRID_COLOR,
-                (0, screen_y),
-                (constants.SCREEN_WIDTH, screen_y)
-            )
-
-        for cell, units in self.grid.cells.items():
-            # Calculate world coordinates from cell coordinates
-            screen_x = cell[0] * self.grid.cell_size
-            screen_y = cell[1] * self.grid.cell_size
-
-            text = self.my_font.render(str(len(units)), True, (255, 255, 255) )
-
-            self.screen.blit(
-                text,
-                (screen_x, screen_y)
-            )
+                self.world.enemies.remove(unit)

@@ -1,6 +1,9 @@
 from simulation import Simulation
+import pygame
 
 def main():
+    pygame.init()
+
     simulation = Simulation()
     simulation.run()
 
